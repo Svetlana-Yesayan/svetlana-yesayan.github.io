@@ -5,55 +5,134 @@
   <title>Course Unit Splitter</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: sans-serif; margin: 2em; background: #f9f9f9; }
-    h1 { color: #333; }
-    textarea { width: 100%; min-height: 120px; margin-bottom: 1em; }
-    .unit-boxes { display: flex; gap: 1em; flex-wrap: wrap; }
-    .unit-box {
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 1em;
-      width: 100%;
-      max-width: 500px;
-      box-sizing: border-box;
-      position: relative;
+    :root {
+      --primary: #007bff;
+      --primary-dark: #0056b3;
+      --bg: #f5f6fa;
+      --card-bg: #fff;
+      --border: #ddd;
+      --text: #333;
+      --text-light: #555;
+      --radius: 10px;
+      --shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      margin: 2em auto;
+      max-width: 900px;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    h1 {
+      color: var(--primary-dark);
+      text-align: center;
       margin-bottom: 1em;
     }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      margin-bottom: 1em;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1em;
+      font-family: monospace;
+      font-size: 0.95em;
+      background: #fff;
+      box-shadow: var(--shadow);
+      transition: border 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.6em 1.2em;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover { background: var(--primary-dark); }
+    button:active { transform: scale(0.97); }
+
+    .info {
+      background: #fff;
+      border-left: 4px solid var(--primary);
+      padding: 1em;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      color: var(--text-light);
+      margin-bottom: 1.5em;
+    }
+
+    .unit-boxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 1.2em;
+    }
+
+    .unit-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1em;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .unit-label {
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 0.5em;
+      display: block;
+      font-size: 1.1em;
+    }
+
     .copy-btn {
       position: absolute;
       top: 1em;
       right: 1em;
-      background: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 0.3em 0.7em;
-      cursor: pointer;
+      background: var(--primary);
+      border-radius: 5px;
+      padding: 0.3em 0.8em;
       font-size: 0.9em;
-      transition: background 0.2s;
     }
-    .copy-btn:active { background: #0056b3; }
-    .unit-label { font-weight: bold; margin-bottom: 0.5em; display: block; }
-    @media (max-width: 800px) {
-      .unit-boxes { flex-direction: column; }
-      .unit-box { max-width: 100%; }
+
+    .copy-btn:hover {
+      background: var(--primary-dark);
     }
-    .info { color: #555; margin-bottom: 1em; }
+
+    @media (max-width: 600px) {
+      body { margin: 1em; }
+      .unit-boxes { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <h1>Course Unit Markdown Splitter</h1>
+  <h1>📘 Course Unit Markdown Splitter</h1>
+
   <div class="info">
     <ul>
-      <li>Paste your full course markdown below (with <code># Unit N</code> headers).</li>
-      <li>Click <b>Split by Units</b> to see each unit in its own box.</li>
-      <li>Click <b>Copy</b> to copy the markdown for any unit.</li>
+      <li>Paste your full course markdown below (use <code># Unit N</code> headers).</li>
+      <li>Click <b>Split by Units</b> to generate each unit separately.</li>
+      <li>Click <b>Copy</b> to copy any unit's markdown easily.</li>
     </ul>
   </div>
+
   <textarea id="inputText" placeholder="Paste your course markdown here..."></textarea>
-  <br>
-  <button onclick="splitByUnits()">Split by Units</button>
+  <button onclick="splitByUnits()">✨ Split by Units</button>
+
   <div id="output" class="unit-boxes"></div>
 
   <script>
@@ -64,8 +143,6 @@
         return;
       }
 
-      // Split by "# Unit" headers (case-insensitive, at line start)
-      // Supports "# Unit 1", "# Unit 2", etc.
       const unitRegex = /^# Unit\s+\d+/gim;
       const matches = [...text.matchAll(unitRegex)];
       if (matches.length === 0) {
@@ -73,27 +150,25 @@
         return;
       }
 
-      // Find the start indices of each unit
       const indices = matches.map(m => m.index);
-      indices.push(text.length); // Add end of text for last unit
+      indices.push(text.length);
 
-      // Extract each unit's markdown
       const units = [];
       for (let i = 0; i < indices.length - 1; i++) {
-        const unitText = text.slice(indices[i], indices[i+1]).trim();
+        const unitText = text.slice(indices[i], indices[i + 1]).trim();
         units.push(unitText);
       }
 
-      // Display
       const output = document.getElementById('output');
       output.innerHTML = '';
+
       units.forEach((unit, idx) => {
         const box = document.createElement('div');
         box.className = 'unit-box';
         box.innerHTML = `
           <button class="copy-btn" onclick="copyToClipboard('unit${idx}')">Copy</button>
           <span class="unit-label">Unit ${idx + 1}</span>
-          <textarea id="unit${idx}" readonly style="width:100%;min-height:100px;margin-top:0.5em;">${unit}</textarea>
+          <textarea id="unit${idx}" readonly>${unit}</textarea>
         `;
         output.appendChild(box);
       });
@@ -103,6 +178,9 @@
       const textarea = document.getElementById(id);
       textarea.select();
       document.execCommand('copy');
+      const btn = document.activeElement;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1000);
     }
   </script>
 </body>
