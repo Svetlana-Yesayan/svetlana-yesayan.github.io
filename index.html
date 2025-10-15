@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Course Text Splitter</title>
+  <title>Course Unit Splitter</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: sans-serif; margin: 2em; background: #f9f9f9; }
     h1 { color: #333; }
-    textarea { width: 100%; min-height: 100px; margin-bottom: 1em; }
+    textarea { width: 100%; min-height: 120px; margin-bottom: 1em; }
     .unit-boxes { display: flex; gap: 1em; flex-wrap: wrap; }
     .unit-box {
       background: #fff;
@@ -15,7 +15,7 @@
       border-radius: 8px;
       padding: 1em;
       width: 100%;
-      max-width: 350px;
+      max-width: 500px;
       box-sizing: border-box;
       position: relative;
       margin-bottom: 1em;
@@ -31,50 +31,69 @@
       padding: 0.3em 0.7em;
       cursor: pointer;
       font-size: 0.9em;
+      transition: background 0.2s;
     }
+    .copy-btn:active { background: #0056b3; }
+    .unit-label { font-weight: bold; margin-bottom: 0.5em; display: block; }
     @media (max-width: 800px) {
       .unit-boxes { flex-direction: column; }
       .unit-box { max-width: 100%; }
     }
+    .info { color: #555; margin-bottom: 1em; }
   </style>
 </head>
 <body>
-  <h1>Course Text Splitter</h1>
-  <label>
-    Number of Units:
-    <input type="number" id="unitCount" min="1" value="4" style="width: 60px;">
-  </label>
-  <br><br>
-  <textarea id="inputText" placeholder="Paste your course text here..."></textarea>
+  <h1>Course Unit Markdown Splitter</h1>
+  <div class="info">
+    <ul>
+      <li>Paste your full course markdown below (with <code># Unit N</code> headers).</li>
+      <li>Click <b>Split by Units</b> to see each unit in its own box.</li>
+      <li>Click <b>Copy</b> to copy the markdown for any unit.</li>
+    </ul>
+  </div>
+  <textarea id="inputText" placeholder="Paste your course markdown here..."></textarea>
   <br>
-  <button onclick="splitText()">Split Text</button>
+  <button onclick="splitByUnits()">Split by Units</button>
   <div id="output" class="unit-boxes"></div>
 
   <script>
-    function splitText() {
-      const text = document.getElementById('inputText').value.trim();
-      const unitCount = parseInt(document.getElementById('unitCount').value, 10);
-      if (!text || unitCount < 1) {
-        alert('Please enter text and a valid number of units.');
+    function splitByUnits() {
+      const text = document.getElementById('inputText').value;
+      if (!text.trim()) {
+        alert('Please paste your course markdown.');
         return;
       }
-      // Split text into N nearly equal parts
-      const words = text.split(/\s+/);
-      const chunkSize = Math.ceil(words.length / unitCount);
-      const parts = [];
-      for (let i = 0; i < unitCount; i++) {
-        parts.push(words.slice(i * chunkSize, (i + 1) * chunkSize).join(' '));
+
+      // Split by "# Unit" headers (case-insensitive, at line start)
+      // Supports "# Unit 1", "# Unit 2", etc.
+      const unitRegex = /^# Unit\s+\d+/gim;
+      const matches = [...text.matchAll(unitRegex)];
+      if (matches.length === 0) {
+        alert('No "# Unit N" headers found. Please check your markdown.');
+        return;
       }
+
+      // Find the start indices of each unit
+      const indices = matches.map(m => m.index);
+      indices.push(text.length); // Add end of text for last unit
+
+      // Extract each unit's markdown
+      const units = [];
+      for (let i = 0; i < indices.length - 1; i++) {
+        const unitText = text.slice(indices[i], indices[i+1]).trim();
+        units.push(unitText);
+      }
+
       // Display
       const output = document.getElementById('output');
       output.innerHTML = '';
-      parts.forEach((part, idx) => {
+      units.forEach((unit, idx) => {
         const box = document.createElement('div');
         box.className = 'unit-box';
         box.innerHTML = `
           <button class="copy-btn" onclick="copyToClipboard('unit${idx}')">Copy</button>
-          <strong>Unit ${idx + 1}</strong>
-          <textarea id="unit${idx}" readonly style="width:100%;min-height:80px;margin-top:0.5em;">${part}</textarea>
+          <span class="unit-label">Unit ${idx + 1}</span>
+          <textarea id="unit${idx}" readonly style="width:100%;min-height:100px;margin-top:0.5em;">${unit}</textarea>
         `;
         output.appendChild(box);
       });
