@@ -44,6 +44,7 @@
       background: #fff;
       box-shadow: var(--shadow);
       transition: border 0.2s;
+      resize: vertical;
     }
 
     textarea:focus {
@@ -166,7 +167,7 @@
         const box = document.createElement('div');
         box.className = 'unit-box';
         box.innerHTML = `
-          <button class="copy-btn" onclick="copyToClipboard('unit${idx}')">Copy</button>
+          <button class="copy-btn" onclick="copyToClipboard('unit${idx}', this)">Copy</button>
           <span class="unit-label">Unit ${idx + 1}</span>
           <textarea id="unit${idx}" readonly>${unit}</textarea>
         `;
@@ -174,13 +175,20 @@
       });
     }
 
-    function copyToClipboard(id) {
+    function copyToClipboard(id, btn) {
       const textarea = document.getElementById(id);
-      textarea.select();
-      document.execCommand('copy');
-      const btn = document.activeElement;
-      btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 1000);
+      navigator.clipboard.writeText(textarea.value)
+        .then(() => {
+          btn.textContent = 'Copied!';
+          btn.style.background = '#28a745';
+          setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.style.background = '';
+          }, 1200);
+        })
+        .catch(() => {
+          alert('Copy failed. Try manually.');
+        });
     }
   </script>
 </body>
